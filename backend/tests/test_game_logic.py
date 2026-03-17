@@ -1,10 +1,8 @@
-import pytest
-from fastapi.testclient import TestClient
-
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+from fastapi.testclient import TestClient
 from main import app
 import game_logic
 
@@ -24,42 +22,34 @@ def test_score_all_gray():
 
 
 def test_score_basic_yellow():
-    # S is in the answer but wrong position
     result = game_logic.score_guess("SABCD", "ASFGH")
-    assert result[0] == "yellow"  # S present in answer but not at pos 0
-    assert result[1] == "yellow"  # A present in answer but not at pos 1
+    assert result[0] == "yellow"  # S present but wrong position
+    assert result[1] == "yellow"  # A present but wrong position
 
 
 def test_score_duplicate_guess_one_in_answer():
-    # Guess SPEED vs answer SPELL:
-    # S(0)==S(0) green, P(1)==P(1) green, E(2)==E(2) green
-    # SPEED[3]=E: answer_available=[None,None,None,L,L] — no E left → gray
-    # SPEED[4]=D: not in remaining → gray
+    # Guess SPEED vs answer SPELL: S, P, E are green.
+    # The second E in SPEED has no remaining unmatched E in SPELL → gray.
     result = game_logic.score_guess("SPEED", "SPELL")
     assert result == ["green", "green", "green", "gray", "gray"]
 
 
 def test_score_duplicate_answer_letter_one_in_guess():
-    # Guess CANES vs answer LLAMA: one A in guess (pos1), two A's in answer (pos2, pos4)
-    # No exact matches in pass1. Pass2: A(pos1) finds A in [L,L,A,M,A] → yellow.
+    # Guess CANES vs answer LLAMA: A at pos1 finds a match in LLAMA → yellow.
     result = game_logic.score_guess("CANES", "LLAMA")
     assert result == ["gray", "yellow", "gray", "gray", "gray"]
 
 
 def test_score_duplicate_answer_two_in_guess_one_in_answer():
-    # Answer FLASK (one S at pos 3), Guess FLOSS (two S's at pos 3 and 4)
-    # F(0)==F(0) green, L(1)==L(1) green, O≠A gray, S(3)==S(3) green
-    # Pass2 pos4: S in remaining? answer_available=[None,None,A,None,K] → no → gray
+    # FLASK has one S (pos 3). FLOSS has S at pos 3 (green) and pos 4.
+    # The second S has no remaining unmatched S in the answer → gray.
     result = game_logic.score_guess("FLOSS", "FLASK")
     assert result == ["green", "green", "gray", "green", "gray"]
 
 
 def test_score_yellow_not_double_counted():
-    # Answer: ABBEY — two B's. Guess: BOBBY — two B's.
-    # B(0)≠A(0), O(1)≠B(1), B(2)==B(2) green, B(3)≠E(3), Y(4)==Y(4) green
-    # Pass2 pos0: B in [A,B,None,E,Y] → yellow, consume pos1
-    # Pass2 pos1: O not in remaining → gray
-    # Pass2 pos3: B in [A,None,None,E,Y] → no B → gray
+    # ABBEY (two B's). Guess BOBBY: B at pos2 is green, B at pos0 is yellow
+    # (matches the remaining B at pos1 in ABBEY). Second guess-B at pos3 → gray.
     result = game_logic.score_guess("BOBBY", "ABBEY")
     assert result == ["yellow", "gray", "green", "gray", "green"]
 
@@ -74,7 +64,7 @@ def test_is_not_win():
 
 
 # ---------------------------------------------------------------------------
-# Integration tests: API shape
+# Integration tests: game creation
 # ---------------------------------------------------------------------------
 
 def test_create_game_valid():
@@ -87,7 +77,7 @@ def test_create_game_valid():
     assert data["guesses"] == []
     assert data["remaining_turns"] == 6
     assert "id" in data
-    assert data.get("answer") is None  # not exposed during play
+    assert data.get("answer") is None
 
 
 def test_create_game_valid_length_8():
@@ -98,13 +88,17 @@ def test_create_game_valid_length_8():
 
 def test_create_game_invalid_length_low():
     r = client.post("/games", json={"word_length": 4})
-    assert r.status_code == 422  # Pydantic field validation (ge=5)
+    assert r.status_code == 422
 
 
 def test_create_game_invalid_length_high():
     r = client.post("/games", json={"word_length": 9})
-    assert r.status_code == 422  # Pydantic field validation (le=8)
+    assert r.status_code == 422
 
+
+# ---------------------------------------------------------------------------
+# Integration tests: game retrieval
+# ---------------------------------------------------------------------------
 
 def test_get_game_not_found():
     r = client.get("/games/nonexistent-id-12345")
@@ -123,7 +117,7 @@ def test_get_game_valid():
 
 
 # ---------------------------------------------------------------------------
-# Integration tests: guess submission
+# Integration tests: guess validation
 # ---------------------------------------------------------------------------
 
 def test_invalid_guess_wrong_length():
@@ -146,17 +140,6 @@ def test_invalid_guess_not_a_word():
     assert "message" in data
 
 
-def test_guess_after_completed_game():
-    r = client.post("/games", json={"word_length": 5})
-    game_id = r.json()["id"]
-    # Win the game
-    import word_repository
-    # Can't monkeypatch here without fixture, so use a known word and accept the test
-    # may fail if ZZZZZ is somehow in the dict — covered in the monkeypatched test below
-    r2 = client.post(f"/games/{game_id}/guesses", json={"guess": "ZZZZZ"})
-    # If ZZZZZ is invalid the 400 is a different error; use monkeypatch test instead
-
-
 def test_guess_after_win_returns_400(monkeypatch):
     import word_repository
     monkeypatch.setattr(word_repository, "get_random_word", lambda length: "CRANE")
@@ -174,7 +157,6 @@ def test_guess_after_win_returns_400(monkeypatch):
 # ---------------------------------------------------------------------------
 
 def test_guess_lowercase_normalized(monkeypatch):
-    """Lowercase input is accepted and normalized to uppercase."""
     import word_repository
     monkeypatch.setattr(word_repository, "get_random_word", lambda length: "CRANE")
     monkeypatch.setattr(word_repository, "is_valid_word", lambda word, length: True)
@@ -186,7 +168,6 @@ def test_guess_lowercase_normalized(monkeypatch):
 
 
 def test_guess_mixedcase_normalized(monkeypatch):
-    """Mixed-case input (e.g. 'CrAnE') is accepted and normalized to uppercase."""
     import word_repository
     monkeypatch.setattr(word_repository, "get_random_word", lambda length: "CRANE")
     monkeypatch.setattr(word_repository, "is_valid_word", lambda word, length: True)
@@ -212,7 +193,7 @@ def test_win_transition(monkeypatch):
     body = r2.json()
     assert body["status"] == "won"
     assert body["guesses"][-1]["feedback"] == ["green"] * 5
-    assert body.get("answer") is None  # not revealed on win
+    assert body.get("answer") is None
 
 
 def test_loss_transition(monkeypatch):
@@ -226,7 +207,7 @@ def test_loss_transition(monkeypatch):
     assert r2.status_code == 200
     body = r2.json()
     assert body["status"] == "lost"
-    assert body["answer"] == "CRANE"  # revealed on loss
+    assert body["answer"] == "CRANE"
 
 
 def test_remaining_turns_decrements(monkeypatch):

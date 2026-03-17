@@ -1,34 +1,55 @@
-import { useState, useEffect } from 'react'
-import './App.css'
+import { useState } from "react";
+import { createGame } from "./api";
+import GameSetup from "./components/GameSetup";
+import GameBoard from "./components/GameBoard";
+import GameStatus from "./components/GameStatus";
+import "./App.css";
 
-const API_URL = 'http://localhost:8000'
+export default function App() {
+  const [game, setGame] = useState(null);
+  const [error, setError] = useState(null);
 
-function App() {
-  const [message, setMessage] = useState('')
-  const [loading, setLoading] = useState(true)
+  // Derive UI phase from game state — no separate phase variable needed.
+  const isSetup = game === null;
+  const isDone = game !== null && game.status !== "in_progress";
 
-  useEffect(() => {
-    fetch(`${API_URL}/`)
-      .then((response) => response.json())
-      .then((data) => {
-        setMessage(data.message)
-        setLoading(false)
-      })
-      .catch((error) => {
-        console.error('Error fetching from API:', error)
-        setMessage('Failed to connect to API')
-        setLoading(false)
-      })
-  }, [])
+  async function handleStart(wordLength) {
+    try {
+      const newGame = await createGame(wordLength);
+      setGame(newGame);
+      setError(null);
+    } catch (err) {
+      setError(err.message ?? "Failed to start game. Is the backend running?");
+    }
+  }
+
+  function handlePlayAgain() {
+    setGame(null);
+    setError(null);
+  }
 
   return (
-    <>
-      <h1>Wordle</h1>
-      <div className="card">
-        <p>API Response: {loading ? 'Loading...' : message}</p>
-      </div>
-    </>
-  )
-}
+    <div className="app">
+      <header className="app-header">
+        <h1>WORDLE</h1>
+      </header>
 
-export default App
+      {error && <div className="error-banner">{error}</div>}
+
+      {isSetup && <GameSetup onStart={handleStart} />}
+
+      {!isSetup && (
+        <>
+          <GameBoard
+            game={game}
+            onGuessResult={setGame}
+            disabled={isDone}
+          />
+          {isDone && (
+            <GameStatus game={game} onPlayAgain={handlePlayAgain} />
+          )}
+        </>
+      )}
+    </div>
+  );
+}

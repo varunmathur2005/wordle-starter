@@ -2,72 +2,87 @@
 
 ## Background
 
-Wordle is a simple game in which you have to guess a five-letter word. You get six guesses, learning a little more information with each guess, and eventually narrow your guesses down to find the answer.
+Wordle is a word-guessing game. You guess a hidden word one letter at a time, and after each guess you learn which letters are correct (green), present but misplaced (yellow), or absent (gray).
 
-You can play an online version of Wordle [here](https://www.nytimes.com/games/wordle/index.html).
-
-## Rules
-
-1. Letters that are in the answer and in the right place turn green.
-2. Letters that are in the answer but in the wrong place turn yellow.
-3. Letters that are not in the answer turn gray.
-4. Answers are never plural.
-5. Letters can appear more than once. So if your guess includes two of one letter, they may both turn yellow, both turn green, or one could be yellow and the other green.
-6. Each guess must be a valid word in Wordle's dictionary. You can't guess ABCDE, for instance.
-7. You do not have to include correct letters in subsequent guesses.
-8. You have six guesses to solve the Wordle.
-
-## Goal
-
-Your goal is to design and build a full stack Wordle application with both a REST API backend and a React frontend.
-
-In our version of Wordle, there are 2 key differences from the original:
-
-1. **Multiple Games**: The user can create and play as many games as they want.
-2. **Configurable Word Length**: The user can configure the number of letters in the target word to be anywhere between 5 to 8 letters, but they will always only have N+1 turns to guess the word. For instance, traditional Wordle involves guessing a five-letter word over six turns, but in our version, the user can pick 7 as the number of letters and get 8 turns to guess the word.
-
-### Backend Requirements
-
-- Build a REST API that supports:
-  - Creating a new game (with configurable word length 5-8)
-  - Submitting guesses and receiving feedback (green/yellow/gray for each letter)
-  - Retrieving game state
-  - Validating that guesses are real words
-- Use appropriate data storage for game state
-
-### Frontend Requirements
-
-- Build a React UI that allows users to:
-  - Start a new game with a selected word length (5-8 letters)
-  - Enter guesses via an on-screen keyboard or physical keyboard
-  - See feedback for each guess (green/yellow/gray letters)
-  - View their guess history for the current game
-  - See when they've won or lost
-
-**Use of AI is allowed and encouraged for this assessment.**
+Play the original: [NYT Wordle](https://www.nytimes.com/games/wordle/index.html)
 
 ---
 
-## Getting Started
+## Rules
 
-This repository includes boilerplate code to help you get started quickly.
+1. Letters in the right position turn **green**.
+2. Letters in the answer but wrong position turn **yellow**.
+3. Letters not in the answer turn **gray**.
+4. Each guess must be a real word in the dictionary.
+5. Letters can appear more than once.
+6. You do not have to reuse correct letters in subsequent guesses.
 
-### Project Structure
+**This version adds two differences from the original:**
+- **Multiple games**: create as many games as you want.
+- **Configurable word length**: choose 5–8 letters; you always get N+1 turns (e.g. 7-letter word → 8 turns).
+
+---
+
+## Project Structure
 
 ```
 wordle-starter/
-├── frontend/           # React application (Vite)
-├── backend/            # FastAPI application
-│   ├── main.py
+├── backend/
+│   ├── main.py               # FastAPI app + route handlers
+│   ├── schemas.py            # Pydantic request/response models
+│   ├── store.py              # In-memory game store
+│   ├── game_logic.py         # Scoring + win/loss logic
+│   ├── word_repository.py    # Word list loading + validation
+│   ├── words/                # Bundled word lists (words_5.txt … words_8.txt)
+│   ├── tests/
+│   │   └── test_game_logic.py
 │   ├── requirements.txt
 │   └── Dockerfile
+├── frontend/
+│   └── src/
+│       ├── App.jsx           # Top-level orchestration (phase state machine)
+│       ├── api.js            # Fetch wrappers for all API calls
+│       └── components/
+│           ├── GameSetup.jsx   # Word-length picker + start button
+│           ├── GameBoard.jsx   # Grid + keyboard input handler
+│           ├── GuessRow.jsx    # One row of letter tiles
+│           ├── Cell.jsx        # Single tile with color variant
+│           ├── Keyboard.jsx    # On-screen QWERTY keyboard
+│           └── GameStatus.jsx  # Win/loss message + Play Again
+├── scripts/
+│   └── generate_words.py     # One-time script used to produce the word lists
 ├── docker-compose.yml
 └── README.md
 ```
 
-### Frontend
+---
 
-The frontend is a React application built with Vite. It is pre-configured with CORS support to communicate with the backend.
+## Setup & Running
+
+### Prerequisites
+- Docker & Docker Compose
+- Node.js 18+
+
+### Backend
+
+```bash
+docker compose up --build
+```
+
+The API starts at `http://localhost:8000`.
+Interactive docs: `http://localhost:8000/docs`
+
+To run in the background:
+```bash
+docker compose up -d --build
+```
+
+To stop:
+```bash
+docker compose down
+```
+
+### Frontend
 
 ```bash
 cd frontend
@@ -75,46 +90,138 @@ npm install
 npm run dev
 ```
 
-The frontend will be available at `http://localhost:5173`.
+The UI is available at `http://localhost:5173`.
 
-**Key files to modify:**
-- `frontend/src/App.jsx` - Main application component, start building your UI here
-- `frontend/src/App.css` - Application styles
-- Add new components in `frontend/src/components/` as needed
+### Running Tests
+
+```bash
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python3 -m pytest tests/ -v
+```
+
+---
+
+## API Overview
+
+### `POST /games`
+Create a new game.
+
+**Request**
+```json
+{ "word_length": 5 }
+```
+`word_length` must be 5–8.
+
+**Response** `201`
+```json
+{
+  "id": "uuid",
+  "word_length": 5,
+  "max_turns": 6,
+  "status": "in_progress",
+  "guesses": [],
+  "remaining_turns": 6,
+  "created_at": "2024-01-01T00:00:00Z",
+  "secret_word": null
+}
+```
+
+---
+
+### `GET /games/{game_id}`
+Retrieve the current state of a game.
+
+**Response** `200` — same shape as above (with `guesses` populated).
+
+**Errors**: `404` if the game doesn't exist.
+
+---
+
+### `POST /games/{game_id}/guesses`
+Submit a guess.
+
+**Request**
+```json
+{ "guess": "CRANE" }
+```
+
+**Response** `200`
+```json
+{
+  "game": { "...full game state..." },
+  "latest_guess": {
+    "guess": "CRANE",
+    "feedback": ["gray", "yellow", "gray", "green", "gray"]
+  }
+}
+```
+
+**Errors**:
+- `400` — wrong length, not a dictionary word, or game already finished
+- `404` — game not found
+
+**Notes**:
+- Input is case-insensitive (normalized to uppercase server-side).
+- `secret_word` is only populated in `game` when `status == "lost"`, so the player can see what they missed.
+
+---
+
+## Design Decisions
 
 ### Backend
 
-The backend is a FastAPI application with CORS already configured for the frontend. Run it using Docker Compose:
+**Modular structure over a single `main.py`**
+Route handlers are thin — they validate input, delegate to focused modules (`game_logic`, `store`, `word_repository`), and convert to response schemas. This keeps business logic testable in isolation.
 
-```bash
-docker compose up --build
-```
+**Two-pass scoring for duplicate letters**
+Standard Wordle scoring can be tricky with repeated letters. The algorithm:
+1. First pass: mark greens (exact position matches), mark those answer positions as consumed.
+2. Second pass: for each non-green letter, find the leftmost unconsumed matching position in the answer → yellow; otherwise gray.
 
-This will build and start the backend container with hot-reloading enabled. The API will be available at `http://localhost:8000`.
+This is the same algorithm used in the original game and handles all edge cases correctly.
 
-To run in detached mode (background):
+**In-memory store**
+Games live in a module-level dict keyed by UUID. Simple, fast, no external dependencies. State is lost on restart, which is acceptable per the brief.
 
-```bash
-docker compose up -d --build
-```
+**Static word lists**
+Word lists for lengths 5–8 are pre-generated from the [dwyl/english-words](https://github.com/dwyl/english-words) public-domain corpus and committed as `.txt` files. They're loaded once at startup into a `list` (for random selection) and a `set` (for O(1) validation). The same set serves as both answer pool and valid-guess dictionary — no curation needed for a take-home assessment.
 
-To stop the container:
+**`secret_word` revealed on loss only**
+The `GameState` response shape has `secret_word: null` during play and on win. It's only populated (by `_to_game_state`) when `status == "lost"`, so the frontend can show "The word was X" at the end of a lost game without requiring a separate endpoint.
 
-```bash
-docker compose down
-```
+### Frontend
 
-API documentation is automatically available at `http://localhost:8000/docs`.
+**Phase state machine in `App.jsx`**
+Three phases: `setup → playing → done`. The `GameBoard` component stays mounted during `done` so the completed grid remains visible while `GameStatus` appears below it.
 
-**Key files to modify:**
-- `backend/main.py` - Add your API endpoints here
-- `backend/requirements.txt` - Add any additional Python dependencies
+**Server as single source of truth**
+The frontend never computes game state locally. Every guess submission returns the full updated `GameState` from the server, which replaces React state atomically. This simplifies the frontend significantly.
 
-### Development Workflow
+**`useCallback` + `useEffect` for keyboard input**
+`handleKey` is defined with `useCallback` (all relevant state in deps) to avoid stale closures. The `keydown` listener is attached/removed in a `useEffect` with cleanup — required to prevent duplicate listeners in React StrictMode development mode.
 
-1. Start the backend with `docker compose up --build`
-2. Start the frontend with `cd frontend && npm install && npm run dev`
-3. Build your API endpoints in `backend/main.py`
-4. Build your UI in the `frontend/src/` directory
-5. The frontend is configured to make requests to `http://localhost:8000`
+---
 
+## Tradeoffs & Assumptions
+
+| Area | Decision | Tradeoff |
+|------|----------|----------|
+| Word list curation | Use full filtered corpus for both answers and valid guesses | Some obscure words may appear as answers; acceptable for an assessment |
+| In-memory store | Module-level dict, no locking | Not thread-safe under concurrent writes in production; sufficient for single-process dev use |
+| Pydantic validation | `ge=5, le=8` on `word_length` returns 422 | Slightly different from the 400 used for business-logic errors; consistent with FastAPI idioms |
+| No authentication | Games identified only by UUID | Intentional per brief; any client with the UUID can view/play a game |
+| No persistence | State lost on restart | Acceptable per brief; would require a database for production |
+
+---
+
+## Future Improvements
+
+- Persist games to a database (SQLite / PostgreSQL via SQLAlchemy)
+- Add a smaller, curated answer word list separate from the valid-guess dictionary
+- Animate tile reveals with CSS transitions
+- Add a share-result feature (colored emoji grid)
+- Track per-session stats (win rate, guess distribution)
+- Improve word list quality: filter out proper nouns, abbreviations, and archaic words

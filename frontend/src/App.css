@@ -1,42 +1,265 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+/* ------------------------------------------------------------------ */
+/* Design tokens                                                         */
+/* ------------------------------------------------------------------ */
+:root {
+  --color-green: #538d4e;
+  --color-yellow: #b59f3b;
+  --color-gray: #3a3a3c;
+  --color-filled-border: #565758;
+  --color-empty-border: #3a3a3c;
+  --color-key-default: #818384;
+  --cell-size: 62px;
+  --cell-font-size: 2rem;
+}
+
+/* ------------------------------------------------------------------ */
+/* Layout                                                                */
+/* ------------------------------------------------------------------ */
+.app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  gap: 1.5rem;
+  padding: 1rem 1rem 3rem;
+}
+
+.app-header {
+  width: 100%;
+  max-width: 500px;
   text-align: center;
+  border-bottom: 1px solid #3a3a3c;
+  padding-bottom: 0.75rem;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.app-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  margin: 0;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* ------------------------------------------------------------------ */
+/* Error banners                                                         */
+/* ------------------------------------------------------------------ */
+.error-banner {
+  background: #1a1a1a;
+  border: 1px solid #ff4444;
+  color: #ff4444;
+  padding: 0.5rem 1.2rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+/* ------------------------------------------------------------------ */
+/* Game Setup                                                            */
+/* ------------------------------------------------------------------ */
+.setup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  margin-top: 1rem;
 }
 
-.card {
-  padding: 2em;
+.setup-label {
+  font-size: 1rem;
+  color: #a0a0a0;
+  margin: 0;
 }
 
-.read-the-docs {
-  color: #888;
+.setup-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.length-btn {
+  width: 52px;
+  height: 52px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  background: #121213;
+  color: #fff;
+  border: 2px solid var(--color-empty-border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: border-color 0.1s;
+}
+
+.length-btn.active {
+  border-color: #fff;
+}
+
+.length-btn:hover:not(.active) {
+  border-color: #818384;
+}
+
+.start-btn {
+  background: var(--color-green);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 0.75rem 2.5rem;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  transition: opacity 0.1s;
+}
+
+.start-btn:hover {
+  opacity: 0.85;
+}
+
+/* ------------------------------------------------------------------ */
+/* Game Board                                                            */
+/* ------------------------------------------------------------------ */
+.game-board {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* ------------------------------------------------------------------ */
+/* Grid + Rows + Cells                                                   */
+/* ------------------------------------------------------------------ */
+.grid {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.guess-row {
+  display: flex;
+  gap: 5px;
+}
+
+.cell {
+  width: var(--cell-size);
+  height: var(--cell-size);
+  border: 2px solid var(--color-empty-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--cell-font-size);
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #fff;
+  user-select: none;
+}
+
+.cell--filled {
+  border-color: var(--color-filled-border);
+}
+
+.cell--green {
+  background: var(--color-green);
+  border-color: var(--color-green);
+}
+
+.cell--yellow {
+  background: var(--color-yellow);
+  border-color: var(--color-yellow);
+}
+
+.cell--gray {
+  background: var(--color-gray);
+  border-color: var(--color-gray);
+}
+
+/* ------------------------------------------------------------------ */
+/* Input error                                                           */
+/* ------------------------------------------------------------------ */
+.input-error {
+  color: #ff8888;
+  font-size: 0.85rem;
+  margin: 0;
+  min-height: 1.2em;
+}
+
+/* ------------------------------------------------------------------ */
+/* Keyboard                                                              */
+/* ------------------------------------------------------------------ */
+.keyboard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.keyboard-row {
+  display: flex;
+  gap: 6px;
+}
+
+.key {
+  height: 58px;
+  min-width: 43px;
+  padding: 0 4px;
+  border: none;
+  border-radius: 4px;
+  background-color: var(--color-key-default);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.1s;
+  user-select: none;
+}
+
+.key--wide {
+  min-width: 65px;
+  font-size: 0.75rem;
+}
+
+.key--green {
+  background: var(--color-green);
+}
+
+.key--yellow {
+  background: var(--color-yellow);
+}
+
+.key--gray {
+  background: var(--color-gray);
+}
+
+.key:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+/* ------------------------------------------------------------------ */
+/* Game Status (win / loss)                                              */
+/* ------------------------------------------------------------------ */
+.game-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.5rem 0;
+}
+
+.status-message {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: 0.02em;
+}
+
+.play-again-btn {
+  background: var(--color-green);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.7rem 2rem;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.1s;
+}
+
+.play-again-btn:hover {
+  opacity: 0.85;
 }

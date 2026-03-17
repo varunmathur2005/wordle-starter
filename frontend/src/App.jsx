@@ -30,26 +30,28 @@ export default function App() {
 
   return (
     <div className="app">
-      <header className="app-header">
-        <h1>WORDLE</h1>
-      </header>
+      <div className="game-container">
+        <header className="app-header">
+          <h1>WORDLE</h1>
+        </header>
 
-      {error && <div className="error-banner">{error}</div>}
+        {error && <div className="error-banner">{error}</div>}
 
-      {isSetup && <GameSetup onStart={handleStart} />}
+        {isSetup && <GameSetup onStart={handleStart} />}
 
-      {!isSetup && (
-        <>
-          <GameBoard
-            game={game}
-            onGuessResult={setGame}
-            disabled={isDone}
-          />
-          {isDone && (
-            <GameStatus game={game} onPlayAgain={handlePlayAgain} />
-          )}
-        </>
-      )}
+        {!isSetup && (
+          <>
+            <GameBoard
+              game={game}
+              onGuessResult={setGame}
+              disabled={isDone}
+            />
+            {isDone && (
+              <GameStatus game={game} onPlayAgain={handlePlayAgain} />
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

@@ -8,63 +8,91 @@
   --color-filled-border: #565758;
   --color-empty-border: #3a3a3c;
   --color-key-default: #818384;
+  --color-surface: #1a1a1b;
+  --color-border: #3a3a3c;
   --cell-size: 62px;
   --cell-font-size: 2rem;
 }
 
 /* ------------------------------------------------------------------ */
-/* Layout                                                                */
+/* Page shell                                                            */
 /* ------------------------------------------------------------------ */
 .app {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-start;
   min-height: 100vh;
-  gap: 1.5rem;
-  padding: 1rem 1rem 3rem;
+  padding: 2rem 1rem 3rem;
+  box-sizing: border-box;
 }
 
+/* ------------------------------------------------------------------ */
+/* Game container (card)                                                 */
+/* ------------------------------------------------------------------ */
+.game-container {
+  width: min(520px, 100%);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  overflow: hidden; /* clips header border-radius at top */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ------------------------------------------------------------------ */
+/* Header                                                                */
+/* ------------------------------------------------------------------ */
 .app-header {
   width: 100%;
-  max-width: 500px;
+  box-sizing: border-box;
   text-align: center;
-  border-bottom: 1px solid #3a3a3c;
-  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+  padding: 1.1rem 1.5rem;
 }
 
 .app-header h1 {
-  font-size: 2rem;
-  font-weight: 700;
-  letter-spacing: 0.25em;
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: 0.3em;
   margin: 0;
+  color: #fff;
 }
 
 /* ------------------------------------------------------------------ */
-/* Error banners                                                         */
+/* Error banner                                                          */
 /* ------------------------------------------------------------------ */
 .error-banner {
-  background: #1a1a1a;
-  border: 1px solid #ff4444;
-  color: #ff4444;
-  padding: 0.5rem 1.2rem;
-  border-radius: 4px;
-  font-size: 0.9rem;
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(255, 68, 68, 0.08);
+  border-bottom: 1px solid rgba(255, 68, 68, 0.4);
+  color: #ff8888;
+  padding: 0.6rem 1.5rem;
+  font-size: 0.875rem;
+  text-align: center;
 }
 
 /* ------------------------------------------------------------------ */
-/* Game Setup                                                            */
+/* Setup screen                                                          */
 /* ------------------------------------------------------------------ */
 .setup {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.2rem;
-  margin-top: 1rem;
+  gap: 1.5rem;
+  padding: 2.5rem 1.5rem 2.75rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .setup-label {
-  font-size: 1rem;
-  color: #a0a0a0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #888;
   margin: 0;
 }
 
@@ -73,42 +101,50 @@
   gap: 0.5rem;
 }
 
+/* Segmented-control style: active has white fill, inactive is ghost */
 .length-btn {
-  width: 52px;
-  height: 52px;
+  width: 56px;
+  height: 56px;
   font-size: 1.1rem;
-  font-weight: 600;
-  background: #121213;
-  color: #fff;
-  border: 2px solid var(--color-empty-border);
-  border-radius: 4px;
+  font-weight: 700;
+  background: transparent;
+  color: #aaa;
+  border: 2px solid #3a3a3c;
+  border-radius: 8px;
   cursor: pointer;
-  transition: border-color 0.1s;
+  transition: border-color 0.12s, background 0.12s, color 0.12s;
+  padding: 0;
 }
 
 .length-btn.active {
+  background: #fff;
   border-color: #fff;
+  color: #121213;
 }
 
 .length-btn:hover:not(.active) {
   border-color: #818384;
+  color: #fff;
 }
 
 .start-btn {
+  width: 100%;
+  max-width: 280px;
   background: var(--color-green);
   color: #fff;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 1rem;
   font-weight: 700;
-  padding: 0.75rem 2.5rem;
+  padding: 0.875rem 0;
   cursor: pointer;
-  letter-spacing: 0.05em;
-  transition: opacity 0.1s;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: opacity 0.12s;
 }
 
 .start-btn:hover {
-  opacity: 0.85;
+  opacity: 0.88;
 }
 
 /* ------------------------------------------------------------------ */
@@ -118,7 +154,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: 1.25rem;
+  padding: 1.25rem 1rem 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* ------------------------------------------------------------------ */
@@ -147,6 +186,7 @@
   text-transform: uppercase;
   color: #fff;
   user-select: none;
+  border-radius: 2px;
 }
 
 .cell--filled {
@@ -173,9 +213,12 @@
 /* ------------------------------------------------------------------ */
 .input-error {
   color: #ff8888;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   margin: 0;
   min-height: 1.2em;
+  text-align: center;
 }
 
 /* ------------------------------------------------------------------ */
@@ -186,6 +229,9 @@
   flex-direction: column;
   gap: 8px;
   align-items: center;
+  padding: 0.5rem 0.5rem 1.25rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .keyboard-row {
@@ -204,30 +250,24 @@
   font-size: 0.85rem;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.1s;
+  transition: background 0.1s, opacity 0.1s;
   user-select: none;
+  flex-shrink: 0;
 }
 
 .key--wide {
   min-width: 65px;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
 }
 
-.key--green {
-  background: var(--color-green);
-}
-
-.key--yellow {
-  background: var(--color-yellow);
-}
-
-.key--gray {
-  background: var(--color-gray);
-}
+.key--green  { background: var(--color-green); }
+.key--yellow { background: var(--color-yellow); }
+.key--gray   { background: var(--color-gray); }
 
 .key:disabled {
   cursor: default;
-  opacity: 0.6;
+  opacity: 0.55;
 }
 
 /* ------------------------------------------------------------------ */
@@ -237,29 +277,96 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.8rem;
-  padding: 0.5rem 0;
+  gap: 1rem;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 1rem 1.5rem 1.75rem;
+  border-top: 1px solid var(--color-border);
 }
 
 .status-message {
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-size: 1.15rem;
+  font-weight: 700;
   margin: 0;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
+  color: #fff;
+  text-align: center;
 }
 
 .play-again-btn {
   background: var(--color-green);
   color: #fff;
   border: none;
-  border-radius: 4px;
-  padding: 0.7rem 2rem;
-  font-size: 1rem;
+  border-radius: 6px;
+  padding: 0.75rem 0;
+  width: 100%;
+  max-width: 280px;
+  font-size: 0.95rem;
   font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   cursor: pointer;
-  transition: opacity 0.1s;
+  transition: opacity 0.12s;
 }
 
 .play-again-btn:hover {
-  opacity: 0.85;
+  opacity: 0.88;
+}
+
+/* ------------------------------------------------------------------ */
+/* Responsive — narrow screens                                           */
+/* ------------------------------------------------------------------ */
+@media (max-width: 500px) {
+  .app {
+    padding: 1rem 0.5rem 2rem;
+  }
+
+  .game-container {
+    border-radius: 8px;
+  }
+
+  .app-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .setup {
+    padding: 1.75rem 1rem 2rem;
+  }
+
+  .key {
+    height: 50px;
+    min-width: 32px;
+    font-size: 0.75rem;
+  }
+
+  .key--wide {
+    min-width: 50px;
+    font-size: 0.65rem;
+  }
+
+  .keyboard-row {
+    gap: 4px;
+  }
+
+  .keyboard {
+    gap: 6px;
+    padding: 0.25rem 0.25rem 1rem;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Responsive — large screens                                            */
+/* ------------------------------------------------------------------ */
+@media (min-width: 900px) {
+  .app {
+    padding: 3rem 1rem 4rem;
+  }
+
+  .app-header {
+    padding: 1.25rem 1.5rem;
+  }
+
+  .app-header h1 {
+    font-size: 2rem;
+  }
 }
